@@ -124,7 +124,7 @@ a{color:var(--a)}
 .pill{align-self:flex-start;margin-top:4px;appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-size:.78rem;border-radius:999px;padding:3px 11px 3px 9px;display:inline-flex;align-items:center;gap:7px;cursor:pointer}
 .pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none}
 .pill[data-state="ok"]::before{background:var(--c)}
-.pill[data-state="busy"]::before{background:var(--a)}
+.pill[data-state="busy"]::before,.pill[data-state="pending"]::before{background:var(--a)}
 .pill[data-state="offline"]::before{background:var(--b)}
 .pill[data-state="auth"]::before,.pill[data-state="forbidden"]::before,.pill[data-state="err"]::before{background:var(--bad)}
 .steps{margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:6px;font-size:.92rem}
@@ -441,12 +441,26 @@ label.btn{display:inline-flex;align-items:center}
     const ks = Object.keys(S.weight).filter(k=>kgOf(k)!=null).sort().reverse().slice(0,10);
     document.getElementById('wlist').innerHTML = ks.map(k=>{const p=k.split('-');return '<span>'+p[2]+'.'+p[1]+' · '+f1(kgOf(k))+'</span>';}).join('');
   }
-  document.getElementById('kgSave').addEventListener('click', () => {
-    const v = parseFloat(kg.value.replace(',','.'));
-    if(!(v>30 && v<250)){ kg.setCustomValidity('Введи вес в кг, например 75,4'); kg.reportValidity(); return; }
-    kg.setCustomValidity(''); S.weight[T] = {kg:Math.round(v*10)/10, t:Date.now()}; save(); renderW(); Sync.soon();
-    const b = document.getElementById('kgSave'); b.textContent='Записано'; setTimeout(()=>b.textContent='Записать',1500);
-  });
+  /* weight saves itself when the field loses focus, on Enter, or by the button */
+  function saveKg(){
+    const raw = kg.value.trim();
+    const prev = kgOf(T);
+    if(raw===''){
+      if(prev==null) return;
+      S.weight[T] = {kg:null, t:Date.now()};   // cleared: keep an empty record so the deletion syncs
+    } else {
+      const v = parseFloat(raw.replace(',','.'));
+      if(!(v>30 && v<250)){ kg.setCustomValidity('Введи вес в кг, например 75,4'); kg.reportValidity(); return; }
+      const val = Math.round(v*10)/10;
+      if(val===prev) return;
+      S.weight[T] = {kg:val, t:Date.now()};
+    }
+    kg.setCustomValidity(''); save(); renderW(); Sync.soon();
+    const b = document.getElementById('kgSave'); b.textContent='Сохранено'; setTimeout(()=>b.textContent='Записать',1500);
+  }
+  document.getElementById('kgSave').addEventListener('click', saveKg);
+  kg.addEventListener('change', saveKg);
+  kg.addEventListener('keydown', ev => { if(ev.key==='Enter'){ ev.preventDefault(); saveKg(); kg.blur(); } });
   kg.addEventListener('input', () => kg.setCustomValidity(''));
   renderW();
 
@@ -530,11 +544,12 @@ label.btn{display:inline-flex;align-items:center}
     }
     function soon(){
       if(!token()) return;
-      clearTimeout(timer); timer = setTimeout(() => { timer = null; run(); }, 1200);
+      setState('pending');   // show at once that the edit was noticed
+      clearTimeout(timer); timer = setTimeout(() => { timer = null; run(); }, 800);
     }
 
     const hhmm = ms => { const d = new Date(ms); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
-    const LABEL = {off:'Синхронизация выключена', busy:'Синхронизация…', offline:'Нет сети · сохранено на устройстве', auth:'Токен не подошёл', forbidden:'Нет доступа к gist', err:'Ошибка синхронизации'};
+    const LABEL = {off:'Синхронизация выключена', pending:'Сохраняю…', busy:'Сохраняю на GitHub…', offline:'Нет сети · сохранено на устройстве', auth:'Токен не подошёл', forbidden:'Нет доступа к gist', err:'Ошибка синхронизации'};
     const HINT = {
       auth:'GitHub не принял токен: он отозван, истёк или вставлен с ошибкой. Нажми «Отключить» и вставь новый.',
       forbidden:'У токена нет права gist или GitHub временно ограничил запросы. Проверь, что при создании стояла галочка gist.',
