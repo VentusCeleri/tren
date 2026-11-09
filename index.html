@@ -644,7 +644,13 @@ label.btn{display:inline-flex;align-items:center}
 </script>
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {}));
+  // A new version took over: reload once so the page and the worker match.
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloaded || !navigator.serviceWorker.controller) return;
+    reloaded = true; location.reload();
+  });
 }
 </script>
 </body>
