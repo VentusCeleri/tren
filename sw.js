@@ -1,5 +1,5 @@
 // Offline-first cache: the app opens instantly from cache and refreshes itself in the background.
-const CACHE = 'tren-v1';
+const CACHE = 'tren-v2';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -17,6 +17,9 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+  const fonts = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
+  if (url.origin !== self.location.origin && !fonts) return; // GitHub API and anything else always go to the network
   const isPage = e.request.mode === 'navigate';
   const key = isPage ? './index.html' : e.request;
   e.respondWith(
