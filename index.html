@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Турник и брусья</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#ECEFF3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1217" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Турник">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@500;600&family=Unbounded:wght@600;700&display=swap">
+<style>
+/* Layout: one narrow column for a phone held at the bar — block calendar, today's session, food and weight; rest timer docked at the bottom */
+:root{
+  --bg:#ECEFF3; --surface:#FFFFFF; --ink:#121820; --muted:#596572; --line:#D2D9E0; --soft:#E2E7EC;
+  --a:#2C5CCB; --b:#B0680A; --c:#2A7F57; --on:#FFFFFF;
+  --display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1217; --surface:#161C23; --ink:#E6ECF1; --muted:#93A0AC; --line:#2A333D; --soft:#1F262E;
+    --a:#7199F0; --b:#E2A54C; --c:#5DBE8F; --on:#0E1217; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1217; --surface:#161C23; --ink:#E6ECF1; --muted:#93A0AC; --line:#2A333D; --soft:#1F262E;
+  --a:#7199F0; --b:#E2A54C; --c:#5DBE8F; --on:#0E1217; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:22px 128px;display:flex;flex-direction:column;gap:28px}
+.dA{--day:var(--a)} .dB{--day:var(--b)} .dC{--day:var(--c)}
+h1,h2{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:1.65rem;font-weight:700;line-height:1.15}
+h2{font-size:1.02rem;font-weight:600}
+.eyebrow{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header{display:flex;flex-direction:column;gap:6px}
+.today{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.today .badge{flex:none;width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-family:var(--display);font-size:1.3rem;font-weight:700;background:var(--day,var(--soft));color:var(--on)}
+.today .badge.rest{background:var(--soft);color:var(--muted)}
+.today b{display:block;font-weight:600}
+section{display:flex;flex-direction:column;gap:12px}
+/* calendar */
+.cal{display:grid;grid-template-columns:2.4rem repeat(7,minmax(0,1fr));gap:5px}
+.cal .hd{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:center;font-weight:600}
+.cal .wk{font-family:var(--mono);font-size:.74rem;color:var(--muted);display:flex;flex-direction:column;justify-content:center;line-height:1.15}
+.cal .wk small{font-family:var(--body);font-size:.62rem}
+.cell{border-radius:9px;min-height:52px;padding:5px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:color-mix(in srgb,var(--day,var(--soft)) 15%,var(--surface));border:1px solid transparent;position:relative}
+.cell .l{font-family:var(--display);font-weight:600;font-size:.98rem;color:var(--day,var(--muted));line-height:1.1}
+.cell .d{font-family:var(--mono);font-size:.64rem;color:var(--muted)}
+.cell.off{background:transparent;border:1px dashed var(--line)}
+.cell.off .l{color:var(--muted);font-weight:500}
+.cell.done{background:var(--day)}
+.cell.done .l,.cell.done .d{color:var(--on)}
+.cell.done::after{content:"✓";position:absolute;top:2px;right:5px;font-size:.62rem;color:var(--on)}
+.cell.now{outline:2px solid var(--ink);outline-offset:1px}
+.cell.deload{background-image:repeating-linear-gradient(135deg,transparent 0 6px,color-mix(in srgb,var(--day,var(--muted)) 12%,transparent) 6px 8px)}
+.cell.done.deload{background-image:none}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.8rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;background:var(--day);display:inline-block}
+.legend i.dl{background:repeating-linear-gradient(135deg,var(--soft) 0 3px,var(--muted) 3px 4px)}
+/* tabs */
+.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;background:var(--soft);padding:5px;border-radius:12px}
+.tab{appearance:none;border:0;background:transparent;color:var(--ink);font:inherit;border-radius:9px;padding:8px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.2}
+.tab .tl{font-family:var(--display);font-weight:600;font-size:1.05rem;color:var(--day)}
+.tab .tn{font-size:.78rem;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--surface);box-shadow:0 1px 0 var(--line),0 0 0 1px var(--line)}
+.tab:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--day,var(--a));outline-offset:2px}
+.warm{font-size:.88rem;color:var(--muted);border-left:3px solid var(--day);padding:2px 0 2px 12px}
+.warm b{color:var(--ink);font-weight:600}
+.deloadNote{font-size:.85rem;background:color-mix(in srgb,var(--day) 12%,var(--surface));border-radius:10px;padding:8px 12px}
+.ex{display:flex;flex-direction:column;gap:10px;padding:14px 0;border-top:1px solid var(--line)}
+.ex:first-of-type{border-top:0}
+.exh{display:flex;gap:12px;align-items:baseline}
+.exh .n{font-family:var(--mono);font-size:.78rem;color:var(--day);font-weight:600;flex:none;width:1.4rem}
+.exh .t{flex:1;min-width:0}
+.exh .t b{display:block;font-weight:600;font-size:1rem;line-height:1.3}
+.exh .t span{font-size:.84rem;color:var(--muted)}
+.exh .sch{flex:none;font-family:var(--mono);font-weight:600;font-size:1.05rem;white-space:nowrap}
+.sets{display:flex;flex-wrap:wrap;gap:8px;padding-left:2.15rem;align-items:center}
+.sets input{width:54px;height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-family:var(--mono);font-size:1.05rem;text-align:center;font-variant-numeric:tabular-nums}
+.sets input::placeholder{color:var(--muted);opacity:.55}
+.sets input.filled{border-color:var(--day);background:color-mix(in srgb,var(--day) 13%,var(--surface))}
+.prev{font-size:.78rem;color:var(--muted);padding-left:2.15rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.macros{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.macros div{display:flex;flex-direction:column}
+.macros .v{font-family:var(--mono);font-weight:600;font-size:1.35rem;line-height:1.2}
+.macros .k{font-size:.74rem;color:var(--muted)}
+ul.rules{margin:0;padding-left:1.1rem;display:flex;flex-direction:column;gap:6px;font-size:.92rem}
+.wrow{display:flex;gap:8px}
+.wrow input{flex:1;min-width:0;height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-family:var(--mono);font-size:1.05rem;padding:0 12px}
+.btn{appearance:none;border:1.5px solid var(--ink);background:var(--ink);color:var(--bg);font:inherit;font-weight:600;border-radius:10px;padding:0 16px;height:44px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.wstats{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px}
+.wstats .v{font-family:var(--mono);font-weight:600;font-size:1.2rem}
+.wlist{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.wlist span{font-family:var(--mono);font-size:.78rem;background:var(--soft);border-radius:6px;padding:3px 7px}
+/* timer */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.timer{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.timer .in{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.timer .clock{font-family:var(--mono);font-weight:600;font-size:1.6rem;min-width:4.6ch;font-variant-numeric:tabular-nums}
+.timer .lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);line-height:1.1}
+.timer .bs{margin-left:auto;display:flex;gap:6px}
+.timer .bs button{appearance:none;border:1.5px solid var(--line);background:transparent;color:var(--ink);font-family:var(--mono);font-size:.85rem;font-weight:600;border-radius:9px;height:40px;padding:0 10px;cursor:pointer}
+.timer.run .clock{color:var(--a)}
+.timer.ring{background:color-mix(in srgb,var(--c) 22%,var(--surface))}
+.timer.ring .clock{color:var(--c)}
+footer{font-size:.78rem;color:var(--muted)}
+@media (max-width:380px){.timer .bs button{padding:0 7px}.cell{min-height:46px}}
+@media (prefers-reduced-motion:no-preference){.tab,.sets input,.cell{transition:background .15s,border-color .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow" id="blockLine">Блок 1 · 09.11 – 06.12.2026</div>
+    <h1>Турник и брусья</h1>
+    <div class="muted">6 утренних тренировок в неделю по 20–30 минут. Отдых 60–90 с, 1–2 повтора в запасе.</div>
+  </header>
+
+  <div class="today" id="today"></div>
+
+  <section aria-labelledby="calH">
+    <h2 id="calH">Схема блока</h2>
+    <div class="cal" id="cal"></div>
+    <div class="legend">
+      <span class="dA"><i></i>A — тяга</span>
+      <span class="dB"><i></i>B — жим</span>
+      <span class="dC"><i></i>C — ноги и кор</span>
+      <span><i class="dl"></i>разгрузка: −1 подход</span>
+    </div>
+  </section>
+
+  <section aria-labelledby="sesH">
+    <h2 id="sesH">Тренировка</h2>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div id="session"></div>
+  </section>
+
+  <section aria-labelledby="foodH">
+    <h2 id="foodH">Питание на день</h2>
+    <div class="card">
+      <div class="macros">
+        <div><span class="v">2100</span><span class="k">ккал</span></div>
+        <div><span class="v">160</span><span class="k">белок, г</span></div>
+        <div><span class="v">65</span><span class="k">жиры, г</span></div>
+        <div><span class="v">220</span><span class="k">углеводы, г</span></div>
+      </div>
+    </div>
+    <ul class="rules">
+      <li>Белок ≈ 2 г на кг веса. Добирай яйцами, творогом, курицей и мясом.</li>
+      <li>7–8 тыс. шагов в день. Это ~250–300 ккал вместо кардио.</li>
+      <li>Утром можно натощак или после банана. Сразу после тренировки завтрак с белком.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="kgH">
+    <h2 id="kgH">Вес</h2>
+    <div class="muted" style="font-size:.88rem">Взвешивайся утром после туалета, смотри на среднее за 7 дней. Цель −0,4…−0,7 кг в неделю.</div>
+    <div class="wrow">
+      <input id="kg" type="text" inputmode="decimal" placeholder="00,0" aria-label="Вес сегодня, кг">
+      <button class="btn" id="kgSave" type="button">Записать</button>
+    </div>
+    <div class="wstats" id="wstats"></div>
+    <div class="wlist" id="wlist"></div>
+  </section>
+
+  <section aria-labelledby="ruleH">
+    <h2 id="ruleH">Как прогрессировать</h2>
+    <ul class="rules">
+      <li>Все подходы сделаны на верхней границе → в следующий раз +1 повтор в каждом подходе или более трудный вариант.</li>
+      <li>Широкий хват: негативы 4×3 → 1 подтягивание + негативы → 3×2 подтягивания.</li>
+      <li>Отжимания: 3×15 чисто → ноги на возвышении.</li>
+      <li>Неделя 1 тестовая: просто записывай повторы. По ним настроим объём.</li>
+      <li>Среднее за неделю падает меньше чем на 0,3 кг две недели подряд → −150…200 ккал. Падает больше 1 кг → добавить.</li>
+      <li>Пропустил день — просто сдвинь план. Две тренировки в один день не делай.</li>
+    </ul>
+  </section>
+
+  <footer>Отметки хранятся только в этом браузере на этом устройстве.</footer>
+</div>
+
+<div class="timer" id="timer">
+  <div class="in">
+    <div><div class="lbl">отдых</div><div class="clock" id="clock">0:00</div></div>
+    <div class="bs">
+      <button type="button" data-s="60">60с</button>
+      <button type="button" data-s="90">90с</button>
+      <button type="button" data-s="120">2м</button>
+      <button type="button" data-s="0" aria-label="Остановить таймер">✕</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const DAY = 864e5;
+  const START = new Date(2026,10,9);   // Monday of week 1
+  const FIRST = new Date(2026,10,10);  // first workout
+  const END   = new Date(2026,11,6);   // last day of block 1
+  const PLAN  = ['A','B','C','A','B','C',null];
+  const DN = ['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС'];
+  const W = {
+    A:{name:'Тяга', full:'A · Тяга', ex:[
+      {id:'neg',  t:'Негативы широким хватом', s:4, r:'3',     ph:'3',  n:'Запрыгни наверх и опускайся 5 секунд'},
+      {id:'chin', t:'Подтягивания узким или обратным', s:4, r:'3–5', ph:'5', n:'Подбородок выше перекладины, внизу руки прямые'},
+      {id:'scap', t:'Подтягивания лопатками', s:2, r:'8', ph:'8', n:'В висе на прямых руках своди лопатки вниз'},
+      {id:'knee', t:'Подъём коленей в висе', s:3, r:'10–15', ph:'15', n:'Без раскачки, колени к груди'}
+    ]},
+    B:{name:'Жим', full:'B · Жим', ex:[
+      {id:'dips', t:'Брусья', s:4, r:'4–6', ph:'6', n:'Не выходит 4 — добивай негативами'},
+      {id:'push', t:'Отжимания', s:3, r:'10–15', ph:'15', n:'Корпус прямой, грудь до пола'},
+      {id:'pike', t:'Отжимания «пайк»', s:3, r:'6–10', ph:'10', n:'Таз вверх, голову опускай между ладоней'},
+      {id:'plank',t:'Планка', s:3, r:'40 с', ph:'40', n:'Пиши секунды'}
+    ]},
+    C:{name:'Ноги и кор', full:'C · Ноги и кор', ex:[
+      {id:'bulg', t:'Болгарские выпады', s:3, r:'8–12/н', ph:'12', n:'Задняя нога на диване, повторы на каждую ногу'},
+      {id:'squat',t:'Приседания', s:3, r:'20', ph:'20', n:'Вниз 3 секунды'},
+      {id:'bridge',t:'Ягодичный мост на одной ноге', s:3, r:'12/н', ph:'12', n:'Пауза наверху 1 секунда'},
+      {id:'calf', t:'Подъёмы на носки', s:3, r:'20', ph:'20', n:'На ступеньке, пятка ниже края'},
+      {id:'hollow',t:'«Лодочка»', s:3, r:'20–30 с', ph:'30', n:'Поясница прижата к коврику, пиши секунды'}
+    ]}
+  };
+
+  const iso = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const dmy = d => String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0');
+  const addD = (d,n) => new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+  const dIdx = d => (d.getDay()+6)%7;
+  const weekOf = d => Math.floor(Math.round((d-START)/DAY)/7)+1;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const T = iso(today);
+  const inBlock = today>=FIRST && today<=END;
+  const curWeek = weekOf(today);
+  const deloadNow = inBlock && curWeek===4;
+
+  let S = {log:{}, weight:{}};
+  try{ const raw = localStorage.getItem('turnik-v1'); if(raw){ const p = JSON.parse(raw); if(p&&typeof p==='object'){ S.log=p.log||{}; S.weight=p.weight||{}; } } }catch(e){}
+  const save = () => { try{ localStorage.setItem('turnik-v1', JSON.stringify(S)); }catch(e){} };
+  const hasLog = k => { const l=S.log[k]; return !!l && Object.keys(l).some(id => (l[id]||[]).some(v => v!=='' && v!=null)); };
+
+  /* header + today */
+  const todayType = inBlock ? PLAN[dIdx(today)] : null;
+  let active = todayType || (today<FIRST ? 'B' : 'A');
+  if(inBlock) document.getElementById('blockLine').textContent = 'Блок 1 · 09.11 – 06.12.2026 · неделя '+curWeek+' из 4';
+  const tEl = document.getElementById('today');
+  if(today<FIRST){
+    tEl.className='today dB';
+    tEl.innerHTML='<div class="badge">B</div><div><b>Старт завтра, ВТ 10.11</b><span class="muted">Первая тренировка — B, жим. Неделя 1 тестовая: записывай повторы.</span></div>';
+  } else if(today>END){
+    tEl.innerHTML='<div class="badge rest">✓</div><div><b>Блок 1 завершён</b><span class="muted">Проверь максимумы в подтягиваниях, брусьях и отжиманиях и пришли цифры. Соберём блок 2.</span></div>';
+  } else if(!todayType){
+    tEl.innerHTML='<div class="badge rest">—</div><div><b>Сегодня отдых</b><span class="muted">Завтра — A, тяга'+(curWeek===3?'. Со следующей недели разгрузка.':'.')+'</span></div>';
+  } else {
+    tEl.className='today d'+todayType;
+    tEl.innerHTML='<div class="badge">'+todayType+'</div><div><b>Сегодня '+DN[dIdx(today)]+' '+dmy(today)+' — '+W[todayType].name.toLowerCase()+'</b><span class="muted">'+(deloadNow?'Разгрузочная неделя: на 1 подход меньше в каждом упражнении.':'Неделя '+curWeek+' из 4. Около 25 минут.')+'</span></div>';
+  }
+
+  /* calendar */
+  const cal = document.getElementById('cal');
+  function renderCal(){
+    let h = '<div></div>' + DN.map(x=>'<div class="hd">'+x+'</div>').join('');
+    for(let w=0; w<4; w++){
+      h += '<div class="wk">Н'+(w+1)+(w===3?'<small>разгр.</small>':w===0?'<small>тест</small>':'')+'</div>';
+      for(let d=0; d<7; d++){
+        const date = addD(START, w*7+d), k = iso(date);
+        const type = date<FIRST ? null : PLAN[d];
+        const cls = ['cell'];
+        if(type) cls.push('d'+type); else cls.push('off');
+        if(w===3) cls.push('deload');
+        if(hasLog(k)) cls.push('done');
+        if(k===T) cls.push('now');
+        const lab = type || (date<FIRST ? '·' : 'отдых');
+        h += '<div class="'+cls.join(' ')+'" title="'+DN[d]+' '+dmy(date)+'"><span class="l"'+(type?'':' style="font-size:.66rem"')+'>'+lab+'</span><span class="d">'+dmy(date)+'</span></div>';
+      }
+    }
+    cal.innerHTML = h;
+  }
+  renderCal();
+
+  /* tabs + session */
+  const tabs = document.getElementById('tabs'), ses = document.getElementById('session');
+  function renderTabs(){
+    tabs.innerHTML = ['A','B','C'].map(k =>
+      '<button class="tab d'+k+'" role="tab" id="tab-'+k+'" aria-selected="'+(k===active)+'" data-k="'+k+'"><span class="tl">'+k+'</span><span class="tn">'+W[k].name+'</span></button>'
+    ).join('');
+  }
+  function lastTime(id){
+    const keys = Object.keys(S.log).filter(k => k<T).sort().reverse();
+    for(const k of keys){ const arr = (S.log[k]||{})[id]; if(arr && arr.some(v=>v!=='' && v!=null)) return {k, arr:arr.filter(v=>v!=='' && v!=null)}; }
+    return null;
+  }
+  function renderSession(){
+    const wk = W[active];
+    const cur = S.log[T] || {};
+    let h = '<div class="d'+active+'" style="display:flex;flex-direction:column;gap:12px;margin-top:4px">';
+    h += '<div class="warm"><b>Разминка 3–4 мин:</b> вращения плечами и тазом, 10 приседаний, вис 20 с, 5 подтягиваний лопатками.</div>';
+    if(deloadNow) h += '<div class="deloadNote">Разгрузка: в каждом упражнении на 1 подход меньше.</div>';
+    h += '<div>';
+    wk.ex.forEach((e,i) => {
+      const sets = Math.max(1, e.s - (deloadNow?1:0));
+      const vals = cur[e.id] || [];
+      const lt = lastTime(e.id);
+      h += '<div class="ex"><div class="exh"><span class="n">'+String(i+1).padStart(2,'0')+'</span><div class="t"><b>'+e.t+'</b><span>'+e.n+'</span></div><span class="sch">'+sets+'×'+e.r+'</span></div>';
+      h += '<div class="sets">';
+      for(let s=0; s<sets; s++){
+        const v = vals[s]!=null ? vals[s] : '';
+        h += '<input id="r-'+e.id+'-'+s+'" data-ex="'+e.id+'" data-i="'+s+'" type="text" inputmode="numeric" maxlength="3" placeholder="'+e.ph+'" value="'+String(v).replace(/"/g,'')+'" class="'+(v!==''?'filled':'')+'" aria-label="'+e.t+', подход '+(s+1)+'">';
+      }
+      h += '</div>';
+      if(lt){ const p=lt.k.split('-'); h += '<div class="prev">Прошлый раз '+p[2]+'.'+p[1]+': <span class="num">'+lt.arr.join(' · ')+'</span></div>'; }
+      h += '</div>';
+    });
+    h += '</div></div>';
+    ses.innerHTML = h;
+  }
+  tabs.addEventListener('click', ev => {
+    const b = ev.target.closest('.tab'); if(!b) return;
+    active = b.dataset.k; renderTabs(); renderSession();
+  });
+  ses.addEventListener('input', ev => {
+    const inp = ev.target; if(!inp.dataset || !inp.dataset.ex) return;
+    inp.value = inp.value.replace(/[^0-9]/g,'');
+    const id = inp.dataset.ex, i = +inp.dataset.i;
+    S.log[T] = S.log[T] || {};
+    const arr = S.log[T][id] = S.log[T][id] || [];
+    arr[i] = inp.value;
+    for(let j=0;j<arr.length;j++) if(arr[j]==null) arr[j]='';
+    if(!arr.some(v=>v!=='')) delete S.log[T][id];
+    if(!Object.keys(S.log[T]).length) delete S.log[T];
+    inp.classList.toggle('filled', inp.value!=='');
+    save(); renderCal();
+  });
+  renderTabs(); renderSession();
+
+  /* weight */
+  const kg = document.getElementById('kg');
+  if(S.weight[T]!=null) kg.value = String(S.weight[T]).replace('.',',');
+  function avg(from,to){
+    const v = Object.keys(S.weight).filter(k=>k>=iso(from)&&k<=iso(to)).map(k=>S.weight[k]);
+    return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null;
+  }
+  const f1 = x => x.toFixed(1).replace('.',',');
+  function renderW(){
+    const a1 = avg(addD(today,-6),today), a0 = avg(addD(today,-13),addD(today,-7));
+    let h = '';
+    h += '<div><div class="eyebrow">среднее 7 дней</div><div class="v">'+(a1!=null?f1(a1)+' кг':'—')+'</div></div>';
+    if(a1!=null && a0!=null){ const d=a1-a0; h += '<div><div class="eyebrow">к прошлой неделе</div><div class="v">'+(d>0?'+':'')+f1(d)+' кг</div></div>'; }
+    else h += '<div><div class="eyebrow">к прошлой неделе</div><div class="v muted" style="font-size:.9rem;font-family:var(--body);font-weight:400">появится через 2 недели записей</div></div>';
+    document.getElementById('wstats').innerHTML = h;
+    const ks = Object.keys(S.weight).sort().reverse().slice(0,10);
+    document.getElementById('wlist').innerHTML = ks.map(k=>{const p=k.split('-');return '<span>'+p[2]+'.'+p[1]+' · '+f1(S.weight[k])+'</span>';}).join('');
+  }
+  document.getElementById('kgSave').addEventListener('click', () => {
+    const v = parseFloat(kg.value.replace(',','.'));
+    if(!(v>30 && v<250)){ kg.setCustomValidity('Введи вес в кг, например 75,4'); kg.reportValidity(); return; }
+    kg.setCustomValidity(''); S.weight[T] = Math.round(v*10)/10; save(); renderW();
+    const b = document.getElementById('kgSave'); b.textContent='Записано'; setTimeout(()=>b.textContent='Записать',1500);
+  });
+  kg.addEventListener('input', () => kg.setCustomValidity(''));
+  renderW();
+
+  /* rest timer */
+  const bar = document.getElementById('timer'), clock = document.getElementById('clock');
+  let tEnd = 0, tInt = null, actx = null;
+  const fmt = s => Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+  function beep(){
+    if(!actx) return;
+    try{
+      [0,.3,.6].forEach(o => {
+        const os = actx.createOscillator(), g = actx.createGain(), t0 = actx.currentTime+o;
+        os.frequency.value = 880;
+        g.gain.setValueAtTime(.0001,t0); g.gain.exponentialRampToValueAtTime(.3,t0+.02); g.gain.exponentialRampToValueAtTime(.0001,t0+.2);
+        os.connect(g); g.connect(actx.destination); os.start(t0); os.stop(t0+.22);
+      });
+    }catch(e){}
+  }
+  function tick(){
+    const left = Math.max(0, Math.ceil((tEnd-Date.now())/1000));
+    clock.textContent = fmt(left);
+    if(left===0){ clearInterval(tInt); tInt=null; bar.classList.remove('run'); bar.classList.add('ring'); beep(); }
+  }
+  bar.addEventListener('click', ev => {
+    const b = ev.target.closest('button'); if(!b) return;
+    const s = +b.dataset.s;
+    clearInterval(tInt); tInt=null; bar.classList.remove('ring','run');
+    if(!s){ clock.textContent='0:00'; return; }
+    try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if(actx.resume) actx.resume(); }catch(e){ actx=null; }
+    tEnd = Date.now()+s*1000; bar.classList.add('run'); tick(); tInt = setInterval(tick,250);
+  });
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
